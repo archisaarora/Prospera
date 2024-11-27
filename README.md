@@ -1,2 +1,1 @@
-"# Prospera" 
-"# Prospera" 
+Prospera is an app created by Archisa Arora & Suhani Sengupta in order to help people facing economic desparities. The app allows for people to get specialized feedback on how they can advance themselves economically, whether that be through means of education, applying to jobs, or integrating into the current market. 
