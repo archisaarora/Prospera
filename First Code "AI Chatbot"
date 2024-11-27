@@ -1,0 +1,80 @@
+import spacy
+import os
+from sklearn.metrics.pairwise import cosine_similarity
+from collections import Counter
+from nltk import FreqDist
+import nltk
+
+# Load the English NLP model
+nlp = spacy.load("en_core_web_md")
+
+# Function to extract keywords from document
+def extract_keywords(doc_content):
+    doc = nlp(doc_content)
+    keywords = [token.lemma_ for token in doc if token.is_alpha and not token.is_stop]
+    return Counter(keywords).most_common(10)  # Top 10 keywords
+
+# Function to get relevant sentences
+def get_relevant_sentences(doc_content, query):
+    doc = nlp(doc_content)
+    query_doc = nlp(query)
+    relevant_sentences = []
+
+    for sent in doc.sents:
+        similarity = cosine_similarity([query_doc.vector], [sent.vector])[0][0]
+        if similarity > 0.5:  # Similarity threshold
+            relevant_sentences.append(sent.text)
+
+    return relevant_sentences
+
+# Define the folder path containing the documents
+docs_folder_path = './docs'
+
+# Sample queries
+queries = [
+    "I want to start my own business and need financial guidance.",
+    "I am looking for freelance opportunities in graphic design.",
+    "I need help managing my budget as a single mother.",
+    "What community grants can help support my family?",
+    "Tell me about the poem Spring and Fall"
+]
+
+# Process each query
+for query in queries:
+    print(f"\nProcessing query: {query}")
+    query_doc = nlp(query)
+    query_vector = query_doc.vector  # Vector for the query
+
+    recommendations = []
+
+    # Process each document
+    for doc_name in os.listdir(docs_folder_path):
+        if doc_name.endswith('.txt'):  # Only process .txt files
+            with open(os.path.join(docs_folder_path, doc_name), 'r', encoding='utf-8') as file:
+                doc_content = file.read()
+                doc_vector = nlp(doc_content).vector
+                similarity = cosine_similarity([query_vector], [doc_vector])[0][0]
+
+                # Extract keywords from the document
+                doc_keywords = extract_keywords(doc_content)
+
+                # Check for semantic relevance using keywords
+                if any(keyword in query.lower() for keyword, _ in doc_keywords):
+                    similarity += 0.1  # Boost similarity score if keywords match
+
+                recommendations.append((doc_name, similarity, doc_content))
+
+    # Sort recommendations by similarity
+    recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)
+
+    # Display top recommendations
+    top_recommendations = recommendations[:3]
+    print("Top recommended resources for the user:")
+    for doc_name, similarity, doc_content in top_recommendations:
+        print(f"{doc_name}: Similarity Score = {similarity:.2f}")
+
+        # Get relevant sentences
+        relevant_sentences = get_relevant_sentences(doc_content, query)
+        print("Relevant sentences in the document:")
+        for sentence in relevant_sentences:
+            print(f" - {sentence}")
