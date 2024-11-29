@@ -1,5 +1,4 @@
-#v1
-
+# v2
 import os
 import spacy
 from collections import Counter
@@ -99,6 +98,25 @@ def process_query():
 
     # Return the most relevant documents with their sentences
     return jsonify({"keywords": sorted_results})
+
+
+@app.route("/get_full_text", methods=["GET"])
+def get_full_text():
+    doc_name = request.args.get(
+        'doc_name')  # Get the document name from query parameter
+
+    # If doc_name is not provided, return an error
+    if not doc_name:
+        return jsonify({'error': 'Document name is required'}), 400
+
+    # Search for the document in the loaded documents list
+    document = next((doc for doc in documents if doc['doc_name'] == doc_name),
+                    None)
+    if document:
+        # Return the full content of the document
+        return jsonify({'fullText': document['content']})
+    else:
+        return jsonify({'error': 'Document not found'}), 404
 
 
 if __name__ == '__main__':
