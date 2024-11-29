@@ -1,12 +1,14 @@
-// v3
+//v4
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, Modal } from 'react-native';
 
-export default function App() {
+export default function ChatScreen() {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState([]);
   const [error, setError] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [fullText, setFullText] = useState('');
 
   // Handle the query and process the results
   const handleQuery = async () => {
@@ -46,6 +48,12 @@ export default function App() {
     setQuery(''); // Clear the input field after query submission
   };
 
+  // Function to open the modal with the full text content
+  const openFullText = (text) => {
+    setFullText(text);
+    setModalVisible(true);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TextInput
@@ -70,7 +78,14 @@ export default function App() {
             <Text>Relevant Sentences:</Text>
             {keyword.relevant_sentences && keyword.relevant_sentences.length > 0 ? (
               keyword.relevant_sentences.map((sentence, idx) => (
-                <Text key={idx}>{sentence.trim()}</Text>
+                <View key={idx} style={styles.relevantSentence}>
+                  <Text>{sentence.trim()}</Text>
+                  <Button 
+                    title="View Full Text"
+                    onPress={() => openFullText(sentence.trim())}
+                    color="#F67E7D"
+                  />
+                </View>
               ))
             ) : (
               <Text>No relevant sentences found.</Text>
@@ -81,6 +96,21 @@ export default function App() {
           <Text style={styles.noResults}>No matches found. Try refining your query.</Text>
         )}
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Full Text</Text>
+            <Text>{fullText}</Text>
+            <Button title="Close" onPress={() => setModalVisible(false)} color="#F67E7D" />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -140,5 +170,26 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 16,
     marginTop: 10,
+  },
+  relevantSentence: {
+    marginBottom: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });
