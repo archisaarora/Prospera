@@ -1,8 +1,6 @@
-# v2
+# v3
 import os
 import spacy
-from collections import Counter
-from sklearn.metrics.pairwise import cosine_similarity
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -66,12 +64,17 @@ def process_query():
         similarity = query_doc.similarity(
             doc_parsed)  # Direct comparison between vectors
 
+        # Check if the query keyword appears in the document title or content (boost similarity)
+        if query.lower() in doc_name.lower() or query.lower(
+        ) in doc_content.lower():
+            similarity *= 1.5  # Boost the similarity score (you can adjust this factor)
+
         # Find the most relevant sentences by checking cosine similarity with each sentence
         relevant_sentences = []
         for sentence in doc_parsed.sents:
             sentence_similarity = query_doc.similarity(
                 sentence)  # Compare sentence with the query
-            if sentence_similarity > 0.2:  # Adjust the threshold based on relevance
+            if sentence_similarity > 0.5:  # Adjust the threshold based on relevance
                 relevant_sentences.append({
                     "sentence": sentence.text,
                     "similarity": sentence_similarity
