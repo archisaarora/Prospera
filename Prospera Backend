@@ -1,4 +1,4 @@
-# v3
+# v4
 import os
 import spacy
 from flask import Flask, request, jsonify
@@ -13,7 +13,6 @@ nlp = spacy.load('en_core_web_md')
 # Define the directory where text files are stored
 DOCS_DIR = "ProsperaDocuments"
 
-
 # Function to read all text files from the directory and create the documents list
 def load_documents_from_folder(folder_path):
     documents = []
@@ -25,15 +24,12 @@ def load_documents_from_folder(folder_path):
                 documents.append({"doc_name": filename, "content": content})
     return documents
 
-
 # Load documents from the folder
 documents = load_documents_from_folder(DOCS_DIR)
-
 
 @app.route("/")
 def home():
     return "Welcome to Prospera!"
-
 
 @app.route("/process_query", methods=["POST"])
 def process_query():
@@ -61,20 +57,21 @@ def process_query():
         doc_vector = doc_parsed.vector  # This is the document's vector representation
 
         # Calculate cosine similarity between query and document vectors
-        similarity = query_doc.similarity(
-            doc_parsed)  # Direct comparison between vectors
+        similarity = query_doc.similarity(doc_parsed)  # Overall document similarity
 
-        # Check if the query keyword appears in the document title or content (boost similarity)
-        if query.lower() in doc_name.lower() or query.lower(
-        ) in doc_content.lower():
-            similarity *= 1.5  # Boost the similarity score (you can adjust this factor)
+        # Check if the query word appears in the title or content for boosting
+        boost_factor = 1
+        if query.lower() in doc_name.lower() or query.lower() in doc_content.lower():
+            boost_factor = 1.5  # Boost the similarity score by a factor of 1.5
+
+        # Apply boost factor to the overall similarity score
+        boosted_similarity = similarity * boost_factor
 
         # Find the most relevant sentences by checking cosine similarity with each sentence
         relevant_sentences = []
         for sentence in doc_parsed.sents:
-            sentence_similarity = query_doc.similarity(
-                sentence)  # Compare sentence with the query
-            if sentence_similarity > 0.5:  # Adjust the threshold based on relevance
+            sentence_similarity = query_doc.similarity(sentence)  # Compare sentence with the query
+            if sentence_similarity > 0.2:  # Adjust the threshold based on relevance
                 relevant_sentences.append({
                     "sentence": sentence.text,
                     "similarity": sentence_similarity
@@ -82,45 +79,35 @@ def process_query():
 
         if relevant_sentences:
             results.append({
-                "query":
-                query,
-                "doc_name":
-                doc_name,
-                "similarity":
-                similarity,
-                "relevant_sentences":
-                sorted(relevant_sentences,
-                       key=lambda x: x["similarity"],
-                       reverse=True)[:3]  # Top 3 relevant sentences
+                "query": query,
+                "doc_name": doc_name,
+                "similarity": boosted_similarity,  # Use boosted similarity here
+                "relevant_sentences": sorted(relevant_sentences, key=lambda x: x["similarity"], reverse=True)[:3]  # Top 3 relevant sentences
             })
 
-    # Sort results by overall similarity between query and document
-    sorted_results = sorted(results,
-                            key=lambda x: x['similarity'],
-                            reverse=True)[:3]
+    # Sort results by overall similarity between query and document (using boosted similarity)
+    sorted_results = sorted(results, key=lambda x: x['similarity'], reverse=True)[:3]
 
     # Return the most relevant documents with their sentences
     return jsonify({"keywords": sorted_results})
 
-
+# New endpoint to fetch the full text of a document by name
 @app.route("/get_full_text", methods=["GET"])
 def get_full_text():
-    doc_name = request.args.get(
-        'doc_name')  # Get the document name from query parameter
+    doc_name = request.args.get('doc_name')  # Get the document name from the query parameter
 
-    # If doc_name is not provided, return an error
     if not doc_name:
-        return jsonify({'error': 'Document name is required'}), 400
+        return jsonify({"error": "Document name is required"}), 400
 
-    # Search for the document in the loaded documents list
-    document = next((doc for doc in documents if doc['doc_name'] == doc_name),
-                    None)
-    if document:
-        # Return the full content of the document
-        return jsonify({'fullText': document['content']})
-    else:
-        return jsonify({'error': 'Document not found'}), 404
+    # Search for the document by name and return its content
+    for doc in documents:
+        if doc["doc_name"] == doc_name:
+            return jsonify({"doc_name": doc_name, "content": doc["content"]})
 
+    return jsonify({"error": "Document not found"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+
+
