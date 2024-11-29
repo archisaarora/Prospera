@@ -1,13 +1,12 @@
-// v2 - First working version with Replit
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, Modal } from 'react-native';
+// v3
 
-export default function ChatScreen() {
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
+
+export default function App() {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState([]);
   const [error, setError] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [fullText, setFullText] = useState('');
 
   // Handle the query and process the results
   const handleQuery = async () => {
@@ -20,7 +19,7 @@ export default function ChatScreen() {
     setError('');
 
     try {
-      const res = await fetch('https://5da7a7bd-932d-48a2-8942-5c721558a077-00-2yrn8ppkuwwon.picard.repl.co/process_query', {
+      const res = await fetch('http://127.0.0.1:5000/process_query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,12 +46,6 @@ export default function ChatScreen() {
     setQuery(''); // Clear the input field after query submission
   };
 
-  // Function to open the modal with the full text content
-  const openFullText = (text) => {
-    setFullText(text);
-    setModalVisible(true);
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TextInput
@@ -77,14 +70,7 @@ export default function ChatScreen() {
             <Text>Relevant Sentences:</Text>
             {keyword.relevant_sentences && keyword.relevant_sentences.length > 0 ? (
               keyword.relevant_sentences.map((sentence, idx) => (
-                <View key={idx} style={styles.relevantSentence}>
-                  <Text>{sentence.sentence.trim()}</Text>
-                  <Button 
-                    title="View Full Text"
-                    onPress={() => openFullText(sentence.sentence.trim())}
-                    color="#F67E7D"
-                  />
-                </View>
+                <Text key={idx}>{sentence.trim()}</Text>
               ))
             ) : (
               <Text>No relevant sentences found.</Text>
@@ -95,21 +81,6 @@ export default function ChatScreen() {
           <Text style={styles.noResults}>No matches found. Try refining your query.</Text>
         )}
       </View>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Full Text</Text>
-            <Text>{fullText}</Text>
-            <Button title="Close" onPress={() => setModalVisible(false)} color="#F67E7D" />
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }
@@ -169,26 +140,5 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 16,
     marginTop: 10,
-  },
-  relevantSentence: {
-    marginBottom: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#481F48',
-    marginBottom: 10,
   },
 });
