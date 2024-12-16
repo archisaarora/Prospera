@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "sdkVersion": "52.0.0",
+    "platforms": ["ios", "android", "web"],
+    "name": "Prospera",
+    "slug": "prospera",
+    "privacy": "public",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_ERROR_RECOVERY"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "bundleIdentifier": "com.example.prospera"
+    },
+    "android": {
+      "package": "com.example.prospera"
+    }
+  }
+}
